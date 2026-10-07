@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Programação — Rádio Blackterapia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;800&family=Outfit:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --night:#0e0620;
+  --magenta:#ff2d95;
+  --gold:#ffc21f;
+  --gold-lt:#ffe487;
+  --ink:#f6ecff;
+  --muted:#b498d0;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:"Outfit",system-ui,-apple-system,sans-serif;
+  background:var(--night);color:var(--ink);overflow:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+:focus-visible{outline:2px solid var(--gold-lt);outline-offset:3px;border-radius:8px}
+
+.embutido body{background:transparent}
+.slider{height:100%;display:flex;flex-direction:column}
+
+/* trilho com rolagem nativa: arrastar com o dedo funciona sem biblioteca */
+.trilho{
+  flex:1;min-height:0;display:flex;overflow-x:auto;overflow-y:hidden;
+  scroll-snap-type:x mandatory;scroll-behavior:smooth;scrollbar-width:none;
+  border-radius:14px;
+}
+.trilho::-webkit-scrollbar{display:none}
+.slide{
+  position:relative;flex:0 0 100%;height:100%;scroll-snap-align:center;
+  display:grid;place-items:center;overflow:hidden;
+}
+/* o próprio flyer, desfocado, preenche as sobras ao redor */
+.slide .fundo{
+  position:absolute;inset:-30px;background-size:cover;background-position:center;
+  filter:blur(28px) saturate(1.3) brightness(.45);transform:scale(1.1);
+}
+.slide img{
+  position:absolute;inset:12px;width:calc(100% - 24px);height:calc(100% - 24px);
+  object-fit:contain;display:block;filter:drop-shadow(0 16px 32px rgba(0,0,0,.55));
+}
+.slide a{display:contents}
+
+
+.seta{
+  position:absolute;top:50%;z-index:3;width:42px;height:42px;margin-top:-21px;border-radius:50%;
+  display:grid;place-items:center;background:rgba(12,4,23,.6);backdrop-filter:blur(6px);
+  border:1px solid rgba(255,255,255,.14);transition:background .15s;
+}
+.seta:hover{background:rgba(255,45,149,.55)}
+.seta svg{width:20px;height:20px;fill:#fff}
+.seta.ant{left:10px}.seta.prox{right:10px}
+.palco{position:relative;flex:1;min-height:0;display:flex}
+.so-um .seta,.so-um .pontos{display:none}
+
+.legenda{display:flex;align-items:center;gap:14px;padding:12px 4px 2px;min-height:58px}
+.legenda .txt{flex:1;min-width:0}
+.legenda .prog{font:800 1.05rem/1.2 "Archivo",sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.legenda .tit{color:var(--muted);font-size:.9rem;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pontos{display:flex;gap:6px;flex:none}
+.pontos button{width:8px;height:8px;border-radius:99px;background:rgba(255,255,255,.22);
+  transition:width .25s,background .25s;padding:0}
+.pontos button[aria-current="true"]{width:22px;background:linear-gradient(90deg,var(--gold),var(--magenta))}
+
+.vazio{flex:1;display:grid;place-items:center;text-align:center;color:var(--muted);padding:20px;
+  border:1px dashed rgba(255,255,255,.14);border-radius:14px}
+.vazio b{display:block;font:800 1.05rem "Archivo",sans-serif;color:var(--ink);margin-bottom:4px}
+
+@media (prefers-reduced-motion:reduce){
+  .trilho{scroll-behavior:auto}
+}
+</style>
+</head>
+<body>
+<div class="slider" id="slider">
+  <div class="vazio"><div><b>Carregando a programação…</b></div></div>
+</div>
+
+<script>
+// dentro da rádio o fundo fica transparente e se mistura com a caixa
+if(window.self !== window.top) document.documentElement.classList.add('embutido');
+
+const INTERVALO = 6000;          // tempo de cada flyer na tela (ms)
+const ATUALIZAR = 5 * 60 * 1000; // busca flyers novos a cada 5 min
+
+const raiz = document.getElementById('slider');
+let flyers = [], atual = 0, timer = null, pausado = false;
+const norm = s => String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
+const esc = s => String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+async function carregar(){
+  try{
+    const r = await fetch('/api/flyers', {cache:'no-store'});
+    const j = await r.json();
+    const novos = j.flyers || [];
+    // só redesenha se mudou algo, para não "pular" o slide de quem está olhando
+    if(JSON.stringify(novos) !== JSON.stringify(flyers)){ flyers = novos; montar(); }
+  }catch(e){
+    if(!flyers.length) raiz.innerHTML = '<div class="vazio"><div><b>Não foi possível carregar os flyers</b>Verifique a conexão. A página tenta de novo sozinha.</div></div>';
+  }
+}
+
+function montar(){
+  if(!flyers.length){
+    raiz.innerHTML = '<div class="vazio"><div><b>Nenhum flyer publicado no momento</b>Volte mais tarde para ver a programação.</div></div>';
+    return;
+  }
+  raiz.classList.toggle('so-um', flyers.length === 1);
+  raiz.innerHTML = `
+    <div class="palco">
+      <div class="trilho" id="trilho" aria-roledescription="carrossel" aria-label="Flyers da programação">
+        ${flyers.map((f,i) => {
+          const img = `<img src="/img/${f.img}" alt="${esc(f.titulo || f.programa || 'Flyer')}" ${f.w?`width="${f.w}" height="${f.h}"`:''} ${i>1?'loading="lazy"':''} draggable="false">`;
+          return `<div class="slide" role="group" aria-roledescription="slide" aria-label="${i+1} de ${flyers.length}">
+            <div class="fundo" style="background-image:url('/img/${f.img}')"></div>
+            ${f.link ? `<a href="${esc(f.link)}" target="_blank" rel="noopener">${img}</a>` : img}
+          </div>`;
+        }).join('')}
+      </div>
+      <button class="seta ant" id="ant" aria-label="Flyer anterior"><svg viewBox="0 0 24 24"><path d="M15.4 7.4 14 6l-6 6 6 6 1.4-1.4L10.8 12z"/></svg></button>
+      <button class="seta prox" id="prox" aria-label="Próximo flyer"><svg viewBox="0 0 24 24"><path d="M8.6 16.6 10 18l6-6-6-6-1.4 1.4 4.6 4.6z"/></svg></button>
+    </div>
+    <div class="legenda">
+      <div class="txt"><div class="prog" id="l-prog"></div><div class="tit" id="l-tit"></div></div>
+      <div class="pontos" id="pontos">${flyers.map((_,i)=>`<button aria-label="Ir para o flyer ${i+1}"></button>`).join('')}</div>
+    </div>`;
+
+  const trilho = document.getElementById('trilho');
+  document.getElementById('ant').onclick = () => { ir(atual-1); reiniciar(); };
+  document.getElementById('prox').onclick = () => { ir(atual+1); reiniciar(); };
+  document.querySelectorAll('#pontos button').forEach((b,i) => b.onclick = () => { ir(i); reiniciar(); });
+
+  // descobre qual slide está visível (inclusive quando a pessoa arrasta com o dedo)
+  let t;
+  trilho.addEventListener('scroll', () => {
+    clearTimeout(t);
+    t = setTimeout(() => {
+      const i = Math.round(trilho.scrollLeft / trilho.clientWidth);
+      if(i !== atual){ atual = i; marcar(); }
+    }, 80);
+  }, {passive:true});
+
+  const palco = raiz.querySelector('.palco');
+  palco.addEventListener('pointerenter', e => { if(e.pointerType === 'mouse') pausado = true; });
+  palco.addEventListener('pointerleave', () => pausado = false);
+  palco.addEventListener('touchstart', reiniciar, {passive:true});
+
+  atual = Math.min(atual, flyers.length-1);
+  ir(atual, true);
+  reiniciar();
+}
+
+function ir(i, instantaneo){
+  const trilho = document.getElementById('trilho');
+  if(!trilho) return;
+  atual = (i + flyers.length) % flyers.length;
+  trilho.scrollTo({left: atual * trilho.clientWidth, behavior: instantaneo ? 'auto' : undefined});
+  marcar();
+}
+
+function marcar(){
+  const f = flyers[atual]; if(!f) return;
+  document.getElementById('l-prog').textContent = f.programa || f.titulo || '';
+  document.getElementById('l-tit').textContent = f.programa ? (f.titulo || '') : '';
+  document.querySelectorAll('#pontos button').forEach((b,i) => b.setAttribute('aria-current', i === atual));
+}
+
+function reiniciar(){
+  clearInterval(timer);
+  if(flyers.length < 2) return;
+  timer = setInterval(() => { if(!pausado && !document.hidden) ir(atual+1); }, INTERVALO);
+}
+
+
+// mantém o slide certo quando a janela muda de tamanho
+window.addEventListener('resize', () => ir(atual, true));
+
+carregar();
+setInterval(carregar, ATUALIZAR);
+</script>
+</body>
+</html>

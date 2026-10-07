@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="robots" content="noindex, nofollow" />
+<meta name="theme-color" content="#0c0417" />
+<title>Painel de flyers — Rádio Blackterapia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Outfit:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --night:#0c0417;
+  --panel:#1b0930;
+  --panel-2:#24103f;
+  --line:rgba(255,92,174,.22);
+  --line-soft:rgba(255,255,255,.09);
+  --magenta:#ff2d95;
+  --pink:#ff70bb;
+  --gold:#ffc21f;
+  --gold-lt:#ffe487;
+  --green:#4fe0a2;
+  --ink:#f6ecff;
+  --muted:#b498d0;
+  --muted-2:#8f74ad;
+  --danger:#ff5d6c;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{background:var(--night);scroll-padding-top:env(safe-area-inset-top,0px)}
+body{
+  font-family:"Outfit",system-ui,-apple-system,sans-serif;color:var(--ink);min-height:100vh;
+  background:
+    radial-gradient(80% 50% at 50% -10%, rgba(120,40,180,.45), transparent 60%),
+    linear-gradient(180deg,#170727 0%, var(--night) 55%);
+  background-attachment:fixed;
+  padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px);
+  -webkit-font-smoothing:antialiased;
+}
+button,input,select{font:inherit;color:inherit}
+button{background:none;border:0;cursor:pointer}
+a.btn{text-decoration:none;color:var(--ink)}
+:focus-visible{outline:2px solid var(--gold-lt);outline-offset:2px;border-radius:8px}
+[hidden]{display:none!important}
+
+.wrap{max-width:860px;margin:0 auto;padding:22px clamp(14px,4vw,28px) 60px}
+
+/* botões */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:11px 18px;border-radius:12px;font-weight:600;white-space:nowrap;
+  border:1px solid var(--line-soft);background:rgba(255,255,255,.05);transition:background .15s,border-color .15s}
+.btn:hover{background:rgba(255,255,255,.1)}
+.btn.prim{background:linear-gradient(95deg,var(--gold),var(--magenta));border:0;color:#1a0526;font-weight:700}
+.btn.prim:hover{filter:brightness(1.07)}
+.btn.perigo{color:var(--danger);border-color:rgba(255,93,108,.35)}
+.btn[disabled]{opacity:.55;cursor:progress}
+.btn svg{width:18px;height:18px;fill:currentColor}
+.ico{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;color:var(--muted)}
+.ico:hover{background:rgba(255,255,255,.08);color:var(--ink)}
+.ico svg{width:19px;height:19px;fill:currentColor}
+.ico[disabled]{opacity:.25;pointer-events:none}
+
+/* login */
+.login{min-height:100vh;display:grid;place-items:center;padding:20px}
+.login form{width:min(380px,100%);background:var(--panel);border:1px solid var(--line);
+  border-radius:20px;padding:28px 24px}
+.login h1{font:800 1.5rem/1.15 "Archivo",sans-serif}
+.login p{color:var(--muted);margin:6px 0 20px}
+.login .btn{width:100%;margin-top:14px}
+
+/* campos */
+label.campo{display:block;margin-bottom:14px}
+label.campo > span{display:block;font-size:.88rem;color:var(--muted);margin-bottom:6px}
+label.campo small{color:var(--muted-2)}
+.in{width:100%;padding:11px 13px;border-radius:11px;background:rgba(0,0,0,.3);
+  border:1px solid var(--line-soft);outline:none;transition:border-color .15s}
+.in:focus{border-color:var(--pink)}
+.in::-webkit-calendar-picker-indicator{filter:invert(1);opacity:.6}
+.duas{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.erro{color:var(--danger);font-size:.9rem;min-height:1.2em;margin-top:8px}
+
+/* topo */
+.topo{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:22px}
+.topo .tit{flex:1;min-width:200px}
+.topo h1{font:800 clamp(1.5rem,4.5vw,2rem)/1.1 "Archivo",sans-serif}
+.topo p{color:var(--muted);margin-top:4px}
+.topo .acoes{display:flex;gap:8px;flex-wrap:wrap}
+
+/* lista */
+.lista{list-style:none;display:flex;flex-direction:column;gap:10px}
+.item{display:grid;grid-template-columns:auto 72px 1fr auto;align-items:center;gap:14px;
+  padding:10px 12px 10px 6px;border-radius:16px;background:rgba(27,9,48,.82);
+  border:1px solid var(--line-soft);transition:border-color .15s,opacity .15s}
+.item.arrastando{opacity:.4}
+.item.oculto .thumb,.item.vencido .thumb{opacity:.45;filter:grayscale(.6)}
+.alca{cursor:grab;color:var(--muted-2);touch-action:none}
+.alca:active{cursor:grabbing}
+.thumb{width:72px;height:90px;border-radius:9px;object-fit:cover;background:var(--panel-2);display:block}
+.info{min-width:0}
+.info .p{font:700 1.02rem/1.25 "Archivo",sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.info .t{color:var(--muted);font-size:.9rem;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chip{display:inline-flex;align-items:center;gap:6px;margin-top:8px;font-size:.8rem;font-weight:500;
+  padding:4px 10px;border-radius:99px;background:rgba(255,255,255,.07);color:var(--muted)}
+.chip::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.chip.ok{color:var(--green);background:rgba(79,224,162,.1)}
+.chip.agenda{color:var(--gold-lt);background:rgba(255,194,31,.1)}
+.chip.venc{color:var(--danger);background:rgba(255,93,108,.1)}
+.botoes{display:flex;gap:2px;flex-wrap:wrap;justify-content:flex-end}
+@media (max-width:560px){
+  .item{grid-template-columns:auto 60px 1fr;row-gap:6px}
+  .thumb{width:60px;height:75px}
+  .botoes{grid-column:2 / -1;justify-content:flex-start;margin-left:-8px}
+}
+
+.vazio{text-align:center;padding:48px 20px;border:1px dashed var(--line);border-radius:18px;color:var(--muted)}
+.vazio b{display:block;font:800 1.15rem "Archivo",sans-serif;color:var(--ink);margin-bottom:6px}
+.vazio .btn{margin-top:18px}
+
+/* editor */
+dialog{margin:auto;width:min(620px,calc(100% - 24px));max-height:calc(100% - 24px);
+  background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:22px;padding:0}
+dialog::backdrop{background:rgba(5,1,10,.72);backdrop-filter:blur(4px)}
+.ed{display:grid;grid-template-columns:200px 1fr;gap:22px;padding:22px}
+.ed > div{min-width:0}
+.in{min-width:0}
+.ed h2{grid-column:1/-1;font:800 1.3rem "Archivo",sans-serif}
+.drop{position:relative;aspect-ratio:4/5;border-radius:14px;border:1.5px dashed var(--line);
+  display:grid;place-items:center;text-align:center;color:var(--muted);font-size:.9rem;padding:14px;
+  overflow:hidden;cursor:pointer;background:rgba(0,0,0,.25);transition:border-color .15s}
+.drop:hover,.drop.sobre{border-color:var(--pink);color:var(--ink)}
+.drop img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#0e0620}
+.drop .troca{position:absolute;left:8px;right:8px;bottom:8px;padding:7px;border-radius:9px;
+  background:rgba(12,4,23,.8);font-size:.82rem;color:var(--ink)}
+.drop input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.check{display:flex;align-items:center;gap:10px;margin:4px 0 4px;cursor:pointer}
+.check input{width:18px;height:18px;accent-color:var(--magenta)}
+.pe{grid-column:1/-1;display:flex;gap:10px;justify-content:flex-end;border-top:1px solid var(--line-soft);
+  padding-top:16px;margin-top:-4px}
+@media (max-width:560px){
+  .ed{grid-template-columns:1fr}
+  .drop{max-width:220px;width:100%;margin:0 auto}
+  .duas{grid-template-columns:1fr}
+}
+
+/* aviso */
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);
+  background:#2b1150;border:1px solid var(--line);padding:12px 18px;border-radius:12px;
+  box-shadow:0 12px 30px rgba(0,0,0,.4);opacity:0;pointer-events:none;transition:.25s;z-index:10;max-width:calc(100% - 32px)}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.toast.ruim{border-color:rgba(255,93,108,.6)}
+@media (prefers-reduced-motion:reduce){.toast{transition:none}}
+</style>
+</head>
+<body>
+
+<!-- ============ LOGIN ============ -->
+<section class="login" id="v-login">
+  <form id="f-login">
+    <h1>Flyers da rádio</h1>
+    <p>Entre com a senha da equipe para publicar e editar os flyers da programação.</p>
+    <label class="campo"><span>Senha</span>
+      <input class="in" type="password" id="senha" autocomplete="current-password" required autofocus>
+    </label>
+    <div class="erro" id="e-login"></div>
+    <button class="btn prim" type="submit" id="b-entrar">Entrar</button>
+  </form>
+</section>
+
+<!-- ============ PAINEL ============ -->
+<main class="wrap" id="v-painel" hidden>
+  <div class="topo">
+    <div class="tit">
+      <h1>Flyers da programação</h1>
+      <p id="resumo">Arraste para mudar a ordem em que aparecem no slider.</p>
+    </div>
+    <div class="acoes">
+      <a class="btn" href="/" target="_blank" rel="noopener">Ver slider</a>
+      <button class="btn" id="b-sair">Sair</button>
+      <button class="btn prim" id="b-novo">
+        <svg viewBox="0 0 24 24"><path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6z"/></svg>Novo flyer
+      </button>
+    </div>
+  </div>
+  <ul class="lista" id="lista"></ul>
+</main>
+
+<!-- ============ EDITOR ============ -->
+<dialog id="dlg">
+  <form class="ed" id="f-ed" method="dialog">
+    <h2 id="ed-tit">Novo flyer</h2>
+
+    <div>
+      <label class="drop" id="drop">
+        <span id="drop-txt">Toque para escolher a imagem do flyer ou arraste o arquivo aqui</span>
+        <input type="file" id="arquivo" accept="image/jpeg,image/png,image/webp,image/gif">
+      </label>
+    </div>
+
+    <div>
+      <label class="campo"><span>Programa</span>
+        <input class="in" id="programa" list="programas" maxlength="60" placeholder="Ex.: Planeta Black">
+        <datalist id="programas">
+          <option>PagoTerapia</option><option>Sander Records</option><option>Planeta Black</option>
+          <option>Fusão Black</option><option>Questão de Bom Gosto</option><option>Black Deluxe</option>
+        </datalist>
+      </label>
+      <label class="campo"><span>Título ou descrição <small>(opcional)</small></span>
+        <input class="in" id="titulo" maxlength="120" placeholder="Ex.: Especial Charme anos 90">
+      </label>
+      <label class="campo"><span>Link ao tocar no flyer <small>(opcional)</small></span>
+        <input class="in" id="link" type="url" maxlength="500" placeholder="https://instagram.com/…">
+      </label>
+      <div class="duas">
+        <label class="campo"><span>Aparece a partir de</span><input class="in" id="inicio" type="date"></label>
+        <label class="campo"><span>Sai do ar depois de</span><input class="in" id="fim" type="date"></label>
+      </div>
+      <label class="check"><input type="checkbox" id="ativo" checked> Mostrar no slider</label>
+      <div class="erro" id="e-ed"></div>
+    </div>
+
+    <div class="pe">
+      <button class="btn" type="button" id="b-cancelar">Cancelar</button>
+      <button class="btn prim" type="submit" id="b-salvar">Publicar flyer</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const br = d => d ? d.split('-').reverse().slice(0,2).join('/') : '';
+
+let SENHA = '';
+try{ SENHA = sessionStorage.getItem('flyers-senha') || ''; }catch(e){}
+let flyers = [], hoje = '', editando = null, imagemNova = null;
+
+/* ---------- comunicação com a API ---------- */
+async function api(metodo, corpo, query=''){
+  const r = await fetch('/api/flyers' + query, {
+    method: metodo,
+    headers: {'content-type':'application/json', 'x-senha': SENHA},
+    body: corpo ? JSON.stringify(corpo) : undefined,
+    cache: 'no-store'
+  });
+  let j = {}; try{ j = await r.json(); }catch(e){}
+  if(r.status === 401){ sair(); throw new Error('Senha incorreta.'); }
+  if(!r.ok) throw new Error(j.erro || 'Não foi possível concluir. Tente de novo.');
+  return j;
+}
+
+function aviso(msg, ruim){
+  const t = $('toast'); t.textContent = msg; t.classList.toggle('ruim', !!ruim);
+  t.classList.add('on'); clearTimeout(aviso.t); aviso.t = setTimeout(() => t.classList.remove('on'), 3200);
+}
+
+/* ---------- login ---------- */
+$('f-login').addEventListener('submit', async e => {
+  e.preventDefault();
+  SENHA = $('senha').value; $('e-login').textContent = ''; $('b-entrar').disabled = true;
+  try{
+    await api('POST', {acao:'entrar'});
+    try{ sessionStorage.setItem('flyers-senha', SENHA); }catch(e){}
+    abrirPainel();
+  }catch(err){ $('e-login').textContent = err.message; }
+  $('b-entrar').disabled = false;
+});
+function sair(){
+  SENHA = ''; try{ sessionStorage.removeItem('flyers-senha'); }catch(e){}
+  $('v-painel').hidden = true; $('v-login').hidden = false; $('senha').value = ''; $('senha').focus();
+}
+$('b-sair').onclick = sair;
+
+async function abrirPainel(){
+  $('v-login').hidden = true; $('v-painel').hidden = false;
+  await recarregar();
+}
+
+/* ---------- lista ---------- */
+async function recarregar(){
+  try{
+    const j = await api('GET', null, '?todos=1');
+    flyers = j.flyers; hoje = j.hoje; desenhar();
+  }catch(err){ aviso(err.message, true); }
+}
+
+function situacao(f){
+  if(!f.ativo) return ['', 'Oculto'];
+  if(f.inicio && f.inicio > hoje) return ['agenda', 'Entra em ' + br(f.inicio)];
+  if(f.fim && f.fim < hoje) return ['venc', 'Saiu em ' + br(f.fim)];
+  return ['ok', f.fim ? 'No slider até ' + br(f.fim) : 'No slider'];
+}
+
+const I = {
+  alca:'<svg viewBox="0 0 24 24"><path d="M9 5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm9 0a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zM9 12a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm9 0a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zM9 19a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm9 0a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/></svg>',
+  cima:'<svg viewBox="0 0 24 24"><path d="m7.4 15.4 4.6-4.6 4.6 4.6L18 14l-6-6-6 6z"/></svg>',
+  baixo:'<svg viewBox="0 0 24 24"><path d="M16.6 8.6 12 13.2 7.4 8.6 6 10l6 6 6-6z"/></svg>',
+  editar:'<svg viewBox="0 0 24 24"><path d="M4 17.2V20h2.8l8.3-8.3-2.8-2.8L4 17.2zm13.7-7.6a1 1 0 0 0 0-1.4l-1.9-1.9a1 1 0 0 0-1.4 0l-1.4 1.4 2.8 2.8 1.9-1.9z"/></svg>',
+  ver:'<svg viewBox="0 0 24 24"><path d="M12 5C7 5 3 8.5 2 12c1 3.5 5 7 10 7s9-3.5 10-7c-1-3.5-5-7-10-7zm0 11a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm0-2a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/></svg>',
+  ocultar:'<svg viewBox="0 0 24 24"><path d="M3.3 2 2 3.3l3.2 3.2C3.7 7.8 2.6 9.8 2 12c1 3.5 5 7 10 7 1.8 0 3.4-.4 4.8-1.2l3.9 3.9 1.3-1.3L3.3 2zM12 16a4 4 0 0 1-3.7-5.5l1.6 1.6a2 2 0 0 0 2.5 2.5l1.6 1.6c-.6.2-1.3.3-2 .3zm0-11c5 0 9 3.5 10 7-.4 1.4-1.2 2.8-2.3 3.9l-3.8-3.8A4 4 0 0 0 11.4 8L8.7 5.4C9.7 5.1 10.8 5 12 5z"/></svg>',
+  apagar:'<svg viewBox="0 0 24 24"><path d="M9 3h6l1 2h4v2H4V5h4l1-2zM6 9h12l-1 12H7L6 9z"/></svg>'
+};
+
+function desenhar(){
+  const ul = $('lista');
+  const noSlider = flyers.filter(f => situacao(f)[0] === 'ok').length;
+  $('resumo').textContent = flyers.length
+    ? `${noSlider} de ${flyers.length} aparecendo no slider agora. Arraste para mudar a ordem.`
+    : 'Nenhum flyer cadastrado ainda.';
+
+  if(!flyers.length){
+    ul.innerHTML = `<li class="vazio"><b>Ainda não há flyers</b>Publique o primeiro e ele aparece no slider da rádio em até um minuto.
+      <br><button class="btn prim" onclick="abrirEditor()">Publicar o primeiro flyer</button></li>`;
+    return;
+  }
+  ul.innerHTML = flyers.map((f,i) => {
+    const [cls, txt] = situacao(f);
+    return `<li class="item ${!f.ativo?'oculto':''} ${cls==='venc'?'vencido':''}" data-id="${f.id}">
+      <button class="ico alca" aria-label="Arrastar para reordenar" title="Arrastar">${I.alca}</button>
+      <img class="thumb" src="/img/${f.img}" alt="" loading="lazy">
+      <div class="info">
+        <div class="p">${esc(f.programa || f.titulo || 'Sem nome')}</div>
+        ${f.programa && f.titulo ? `<div class="t">${esc(f.titulo)}</div>` : ''}
+        <span class="chip ${cls}">${txt}</span>
+      </div>
+      <div class="botoes">
+        <button class="ico" data-a="cima" aria-label="Subir" title="Subir" ${i===0?'disabled':''}>${I.cima}</button>
+        <button class="ico" data-a="baixo" aria-label="Descer" title="Descer" ${i===flyers.length-1?'disabled':''}>${I.baixo}</button>
+        <button class="ico" data-a="alternar" aria-label="${f.ativo?'Ocultar do slider':'Mostrar no slider'}" title="${f.ativo?'Ocultar do slider':'Mostrar no slider'}">${f.ativo?I.ver:I.ocultar}</button>
+        <button class="ico" data-a="editar" aria-label="Editar" title="Editar">${I.editar}</button>
+        <button class="ico" data-a="apagar" aria-label="Apagar" title="Apagar">${I.apagar}</button>
+      </div>
+    </li>`;
+  }).join('');
+}
+
+$('lista').addEventListener('click', async e => {
+  const b = e.target.closest('[data-a]'); if(!b) return;
+  const id = b.closest('.item').dataset.id;
+  const i = flyers.findIndex(f => f.id === id), f = flyers[i];
+  const a = b.dataset.a;
+  if(a === 'editar') return abrirEditor(f);
+  if(a === 'cima' || a === 'baixo'){
+    const j = a === 'cima' ? i-1 : i+1;
+    [flyers[i], flyers[j]] = [flyers[j], flyers[i]];
+    desenhar(); return salvarOrdem();
+  }
+  if(a === 'alternar'){
+    try{
+      const r = await api('POST', {...f, acao:'editar', imagem:undefined, ativo:!f.ativo});
+      flyers[i] = r.flyer; desenhar();
+      aviso(r.flyer.ativo ? 'Flyer visível no slider.' : 'Flyer ocultado do slider.');
+    }catch(err){ aviso(err.message, true); }
+  }
+  if(a === 'apagar'){
+    if(!confirm(`Apagar o flyer "${f.programa || f.titulo || 'sem nome'}"? Isso não pode ser desfeito.`)) return;
+    try{ await api('POST', {acao:'apagar', id}); flyers.splice(i,1); desenhar(); aviso('Flyer apagado.'); }
+    catch(err){ aviso(err.message, true); }
+  }
+});
+
+async function salvarOrdem(){
+  try{ await api('POST', {acao:'ordenar', ids: flyers.map(f => f.id)}); aviso('Ordem salva.'); }
+  catch(err){ aviso(err.message, true); recarregar(); }
+}
+
+/* arrastar pela alça (mouse e toque) */
+(function(){
+  const ul = $('lista'); let item = null;
+  ul.addEventListener('pointerdown', e => {
+    const alca = e.target.closest('.alca'); if(!alca) return;
+    e.preventDefault(); item = alca.closest('.item'); item.classList.add('arrastando');
+    alca.setPointerCapture(e.pointerId);
+  });
+  ul.addEventListener('pointermove', e => {
+    if(!item) return;
+    const sob = document.elementFromPoint(e.clientX, e.clientY)?.closest('.item');
+    if(!sob || sob === item) return;
+    const r = sob.getBoundingClientRect();
+    ul.insertBefore(item, e.clientY < r.top + r.height/2 ? sob : sob.nextSibling);
+  });
+  const soltar = () => {
+    if(!item) return;
+    item.classList.remove('arrastando'); item = null;
+    const ids = [...ul.querySelectorAll('.item')].map(li => li.dataset.id);
+    if(ids.join() === flyers.map(f=>f.id).join()) return;
+    flyers.sort((a,b) => ids.indexOf(a.id) - ids.indexOf(b.id));
+    desenhar(); salvarOrdem();
+  };
+  ul.addEventListener('pointerup', soltar);
+  ul.addEventListener('pointercancel', soltar);
+})();
+
+/* ---------- editor ---------- */
+$('b-novo').onclick = () => abrirEditor();
+$('b-cancelar').onclick = () => $('dlg').close();
+
+function abrirEditor(f){
+  editando = f || null; imagemNova = null;
+  $('ed-tit').textContent = f ? 'Editar flyer' : 'Novo flyer';
+  $('b-salvar').textContent = f ? 'Salvar alterações' : 'Publicar flyer';
+  $('programa').value = f?.programa || '';
+  $('titulo').value = f?.titulo || '';
+  $('link').value = f?.link || '';
+  $('inicio').value = f?.inicio || '';
+  $('fim').value = f?.fim || '';
+  $('ativo').checked = f ? f.ativo : true;
+  $('e-ed').textContent = '';
+  $('arquivo').value = '';
+  mostrarPrevia(f ? '/img/' + f.img : '');
+  $('dlg').showModal();
+}
+
+function mostrarPrevia(src){
+  const d = $('drop');
+  d.querySelector('img')?.remove(); d.querySelector('.troca')?.remove();
+  $('drop-txt').hidden = !!src;
+  if(src){
+    const img = new Image(); img.src = src; img.alt = 'Prévia do flyer';
+    const t = document.createElement('span'); t.className = 'troca'; t.textContent = 'Trocar imagem';
+    d.insertBefore(img, $('arquivo')); d.insertBefore(t, $('arquivo'));
+  }
+}
+
+/* reduz a imagem antes de enviar: carrega rápido no slider e cabe no limite do servidor */
+const LADO_MAX = 1600, LIMITE = 2.8 * 1024 * 1024;
+function lerArquivo(arq){
+  return new Promise((ok, falha) => {
+    if(!/^image\/(jpeg|png|webp|gif)$/.test(arq.type)) return falha(new Error('Use uma imagem JPG, PNG, WEBP ou GIF.'));
+    const leitor = new FileReader();
+    leitor.onerror = () => falha(new Error('Não foi possível ler o arquivo.'));
+    leitor.onload = () => {
+      const url = leitor.result, img = new Image();
+      img.onerror = () => falha(new Error('Esse arquivo não parece ser uma imagem válida.'));
+      img.onload = () => {
+        const w = img.naturalWidth, h = img.naturalHeight;
+        // GIF animado é enviado como está, para não perder a animação
+        if(arq.type === 'image/gif'){
+          if(arq.size > 3*1024*1024) return falha(new Error('GIF grande demais. O limite é 3 MB.'));
+          return ok({dataUrl:url, w, h});
+        }
+        const k = Math.min(1, LADO_MAX / Math.max(w, h));
+        const c = document.createElement('canvas');
+        c.width = Math.round(w*k); c.height = Math.round(h*k);
+        const g = c.getContext('2d');
+        g.fillStyle = '#0e0620'; g.fillRect(0, 0, c.width, c.height);
+        g.drawImage(img, 0, 0, c.width, c.height);
+        let q = .88, out = c.toDataURL('image/jpeg', q);
+        while(out.length * .75 > LIMITE && q > .5){ q -= .1; out = c.toDataURL('image/jpeg', q); }
+        ok({dataUrl:out, w:c.width, h:c.height});
+      };
+      img.src = url;
+    };
+    leitor.readAsDataURL(arq);
+  });
+}
+
+async function receberArquivo(arq){
+  if(!arq) return;
+  $('e-ed').textContent = '';
+  try{ imagemNova = await lerArquivo(arq); mostrarPrevia(imagemNova.dataUrl); }
+  catch(err){ $('e-ed').textContent = err.message; }
+}
+$('arquivo').addEventListener('change', e => receberArquivo(e.target.files[0]));
+const drop = $('drop');
+['dragenter','dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('sobre'); }));
+['dragleave','drop'].forEach(ev => drop.addEventListener(ev, () => drop.classList.remove('sobre')));
+drop.addEventListener('drop', e => { e.preventDefault(); receberArquivo(e.dataTransfer.files[0]); });
+// colar imagem (Ctrl+V) com o editor aberto
+document.addEventListener('paste', e => {
+  if(!$('dlg').open) return;
+  const arq = [...(e.clipboardData?.files || [])].find(f => f.type.startsWith('image/'));
+  if(arq){ e.preventDefault(); receberArquivo(arq); }
+});
+
+$('f-ed').addEventListener('submit', async e => {
+  e.preventDefault();
+  const dados = {
+    programa: $('programa').value.trim(),
+    titulo: $('titulo').value.trim(),
+    link: $('link').value.trim(),
+    inicio: $('inicio').value,
+    fim: $('fim').value,
+    ativo: $('ativo').checked
+  };
+  if(!editando && !imagemNova) return $('e-ed').textContent = 'Escolha a imagem do flyer.';
+  if(!dados.programa && !dados.titulo) return $('e-ed').textContent = 'Preencha o programa ou o título.';
+  if(dados.link && !/^https?:\/\//i.test(dados.link)) return $('e-ed').textContent = 'O link precisa começar com https://';
+  if(dados.inicio && dados.fim && dados.fim < dados.inicio) return $('e-ed').textContent = 'A data de saída vem antes da data de entrada.';
+  if(imagemNova){ dados.imagem = imagemNova.dataUrl; dados.w = imagemNova.w; dados.h = imagemNova.h; }
+
+  const btn = $('b-salvar'), txt = btn.textContent;
+  btn.disabled = true; btn.textContent = imagemNova ? 'Enviando imagem…' : 'Salvando…';
+  try{
+    if(editando){
+      const r = await api('POST', {acao:'editar', id:editando.id, ...dados});
+      flyers[flyers.findIndex(f => f.id === editando.id)] = r.flyer;
+      aviso('Alterações salvas.');
+    }else{
+      const r = await api('POST', {acao:'criar', ...dados});
+      flyers.unshift(r.flyer);
+      aviso('Flyer publicado. Ele aparece no slider em até um minuto.');
+    }
+    desenhar(); $('dlg').close();
+  }catch(err){ $('e-ed').textContent = err.message; }
+  btn.disabled = false; btn.textContent = txt;
+});
+
+/* entra direto se a senha já foi digitada nesta aba */
+if(SENHA) api('POST', {acao:'entrar'}).then(abrirPainel).catch(() => {});
+</script>
+</body>
+</html>
